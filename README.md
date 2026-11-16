@@ -9,7 +9,7 @@ Docker Deployment Platform 是一个面向内网环境的轻量级 Docker Compos
 
 
 ## 钉钉审批
-<img width="876" height="808" alt="image" src="https://github.com/user-attachments/assets/3e7164da-8cff-4af5-bed0-0b0b986ab098" />
+<img width="836" height="542" alt="image" src="https://github.com/user-attachments/assets/5d78e69a-2d4b-4836-9494-ecbcc768c8d0" />
 
 
 
