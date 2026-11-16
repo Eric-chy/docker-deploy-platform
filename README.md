@@ -4,6 +4,12 @@
 
 Docker Deployment Platform 是一个面向内网环境的轻量级 Docker Compose 发布平台，包含控制面、节点服务和 Vue 管理界面。它支持项目组、项目、节点、角色权限、发布审批、发布历史、回滚、失败重试和钉钉 / 飞书 / 企业微信通知。
 
+
+<img width="1680" height="613" alt="image" src="https://github.com/user-attachments/assets/52263f39-d886-424e-b3f9-3d46831853c2" />
+
+
+
+
 ## 功能概览
 
 - **项目管理**：维护项目组、项目、目标节点和 Compose 配置。
@@ -54,9 +60,6 @@ Docker Deployment Platform 是一个面向内网环境的轻量级 Docker Compos
 - 调度节点服务执行发布。
 - 接收节点服务回调并更新发布状态。
 - 发送审批、成功、失败、拒绝等通知。
-
-<img width="1680" height="613" alt="image" src="https://github.com/user-attachments/assets/52263f39-d886-424e-b3f9-3d46831853c2" />
-
 
 数据默认存储在 `.data/control.sqlite`。数据库结构通过 `internal/server/migrations` 中的 SQL 迁移自动创建和升级。
 
