@@ -9,7 +9,7 @@ Docker Deployment Platform is a lightweight Docker Compose deployment platform f
 
 
 ## dingtalk
-<img width="876" height="808" alt="image" src="https://github.com/user-attachments/assets/2419640a-f55a-4ecd-abf2-2830a68a5b14" />
+<img width="836" height="612" alt="image" src="https://github.com/user-attachments/assets/579fff9b-3a1a-4a33-ab2e-5349ff53cad3" />
 
 ## Feature Overview
 
