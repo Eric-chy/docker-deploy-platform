@@ -55,6 +55,9 @@ The control plane is responsible for:
 - Receiving agent callbacks and updating deployment status.
 - Sending approval, success, failure, and rejection notifications.
 
+<img width="1680" height="613" alt="image" src="https://github.com/user-attachments/assets/4215bab1-3f0d-4fdb-8bab-4d64e3c95c9c" />
+
+
 Data is stored in `.data/control.sqlite` by default. The schema is created and upgraded automatically by SQL migrations in `internal/server/migrations`.
 
 ### Node Agent
