@@ -5,7 +5,7 @@
 Docker Deployment Platform is a lightweight Docker Compose deployment platform for internal environments. It includes a control plane, a node agent, and a Vue admin console. It supports teams, projects, nodes, role-based permissions, deployment approval, deployment history, rollback, retry, and DingTalk / Feishu / WeCom notifications.
 
 
-<img width="1680" height="613" alt="image" src="https://github.com/user-attachments/assets/4215bab1-3f0d-4fdb-8bab-4d64e3c95c9c" />
+<img width="1681" height="653" alt="image" src="https://github.com/user-attachments/assets/ca287dda-4cef-4289-a99c-f01e13847153" />
 
 
 
