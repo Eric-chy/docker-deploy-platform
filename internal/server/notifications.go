@@ -359,10 +359,10 @@ func replaceNotificationChannelRoles(ctx context.Context, tx *sql.Tx, channelID 
 	return nil
 }
 
-func (app *App) notifyDeployment(event, projectName, version, status, operator, comment string, deploymentID, projectID int64, approvalToken string) {
+func (app *App) notifyDeployment(event, projectName, version, status, operator, comment, locale string, deploymentID, projectID int64, approvalToken string) {
 	message := notify.Message{
 		Event: event, Project: projectName, Version: version,
-		Status: status, Operator: operator, Comment: comment,
+		Status: status, Operator: operator, Comment: comment, Locale: locale,
 	}
 	if event == "deploy_requested" {
 		message.ApproveURL = app.config.PublicURL + "/api/deployments/" + int64ToString(deploymentID) + "/approve?token=" + approvalToken

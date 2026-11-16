@@ -41,12 +41,12 @@ func (app *App) deploy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snapshot, err := app.createDeploymentSnapshot(r.Context(), project, request.ComposeYAML, "deploy", "pending_approval", "pending", currentUser(r))
+	snapshot, err := app.createDeploymentSnapshot(r.Context(), project, request.ComposeYAML, "deploy", "pending_approval", "pending", currentUser(r), requestLocale(r))
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	app.notifyDeployment("deploy_requested", project.Name, snapshot.Version, snapshot.Status, currentUser(r).Name, "", snapshot.ID, project.ID, snapshot.ApprovalToken)
+	app.notifyDeployment("deploy_requested", project.Name, snapshot.Version, snapshot.Status, currentUser(r).Name, "", snapshot.NotificationLocale, snapshot.ID, project.ID, snapshot.ApprovalToken)
 	httpx.WriteJSON(w, http.StatusAccepted, map[string]string{
 		"task_id": snapshot.TaskID,
 		"version": snapshot.Version,
@@ -62,6 +62,7 @@ func (app *App) createDeploymentSnapshot(
 	status,
 	approvalStatus string,
 	operator user,
+	locale string,
 ) (deploymentSnapshot, error) {
 	taskID, err := randomID()
 	if err != nil {
@@ -77,30 +78,69 @@ func (app *App) createDeploymentSnapshot(
 	}
 	approvalTokenHashBytes := sha256.Sum256([]byte(approvalToken))
 	snapshot := deploymentSnapshot{
-		ProjectID:         targetProject.ID,
-		Version:           version,
-		TaskID:            taskID,
-		Action:            action,
-		BeforeYAML:        targetProject.CurrentYAML,
-		AfterYAML:         composeYAML,
-		Status:            status,
-		ApprovalStatus:    approvalStatus,
-		ApprovalToken:     approvalToken,
-		ApprovalTokenHash: hex.EncodeToString(approvalTokenHashBytes[:]),
+		ProjectID:          targetProject.ID,
+		Version:            version,
+		TaskID:             taskID,
+		Action:             action,
+		BeforeYAML:         targetProject.CurrentYAML,
+		AfterYAML:          composeYAML,
+		Status:             status,
+		ApprovalStatus:     approvalStatus,
+		NotificationLocale: normalizeNotificationLocale(locale),
+		ApprovalToken:      approvalToken,
+		ApprovalTokenHash:  hex.EncodeToString(approvalTokenHashBytes[:]),
 	}
 	result, err := app.db.ExecContext(ctx, `
 		INSERT INTO deploy_snapshots(
 			task_id, project_id, version, action, operator_id, before_yaml,
-			after_yaml, status, approval_status, approval_token_hash
+			after_yaml, status, approval_status, notification_locale, approval_token_hash
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		taskID, targetProject.ID, version, action, operator.ID,
-		targetProject.CurrentYAML, composeYAML, status, approvalStatus, snapshot.ApprovalTokenHash,
+		targetProject.CurrentYAML, composeYAML, status, approvalStatus,
+		snapshot.NotificationLocale, snapshot.ApprovalTokenHash,
 	)
 	if err == nil {
 		snapshot.ID, err = result.LastInsertId()
 	}
 	return snapshot, err
+}
+
+func requestLocale(request *http.Request) string {
+	return normalizeNotificationLocale(request.Header.Get("Accept-Language"))
+}
+
+func normalizeNotificationLocale(locale string) string {
+	for _, part := range strings.Split(locale, ",") {
+		language := strings.ToLower(strings.TrimSpace(strings.SplitN(part, ";", 2)[0]))
+		if strings.HasPrefix(language, "en") {
+			return "en-US"
+		}
+		if strings.HasPrefix(language, "zh") {
+			return "zh-CN"
+		}
+	}
+	return "zh-CN"
+}
+
+func notificationApproverLabel(locale string) string {
+	if normalizeNotificationLocale(locale) == "en-US" {
+		return "Notification approval"
+	}
+	return "钉钉审批"
+}
+
+func notificationActionLabel(locale, action string) string {
+	if normalizeNotificationLocale(locale) == "en-US" {
+		if action == "approve" {
+			return "One-click approve"
+		}
+		return "One-click reject"
+	}
+	if action == "approve" {
+		return "一键同意"
+	}
+	return "一键拒绝"
 }
 
 func (app *App) executeDeployment(ctx context.Context, targetProject project, snapshot deploymentSnapshot) error {
@@ -141,7 +181,7 @@ func (app *App) markDeploymentFailed(ctx context.Context, taskID string, err err
 }
 
 func (app *App) startDeployment(w http.ResponseWriter, r *http.Request, targetProject project, composeYAML, action string) {
-	snapshot, err := app.createDeploymentSnapshot(r.Context(), targetProject, composeYAML, action, "running", "", currentUser(r))
+	snapshot, err := app.createDeploymentSnapshot(r.Context(), targetProject, composeYAML, action, "running", "", currentUser(r), requestLocale(r))
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -154,34 +194,37 @@ func (app *App) startDeployment(w http.ResponseWriter, r *http.Request, targetPr
 }
 
 type deploymentSnapshot struct {
-	ID                int64
-	ProjectID         int64
-	Version           string
-	TaskID            string
-	Action            string
-	BeforeYAML        string
-	AfterYAML         string
-	Status            string
-	OperatorID        int64
-	ApprovalStatus    string
-	ApproverID        sql.NullInt64
-	ApprovalComment   string
-	ApprovalToken     string
-	ApprovalTokenHash string
+	ID                 int64
+	ProjectID          int64
+	Version            string
+	TaskID             string
+	Action             string
+	BeforeYAML         string
+	AfterYAML          string
+	Status             string
+	OperatorID         int64
+	ApprovalStatus     string
+	ApproverID         sql.NullInt64
+	ApprovalComment    string
+	NotificationLocale string
+	ApprovalToken      string
+	ApprovalTokenHash  string
 }
 
 func (app *App) getDeploymentSnapshot(ctx context.Context, id int64) (deploymentSnapshot, error) {
 	var snapshot deploymentSnapshot
 	err := app.db.QueryRowContext(ctx, `
 		SELECT id, project_id, version, task_id, action, before_yaml, after_yaml,
-		       status, operator_id, approval_status, approver_id, approval_comment, approval_token_hash
+		       status, operator_id, approval_status, approver_id, approval_comment,
+		       notification_locale, approval_token_hash
 		FROM deploy_snapshots
 		WHERE id = ?`, id,
 	).Scan(
 		&snapshot.ID, &snapshot.ProjectID, &snapshot.Version, &snapshot.TaskID,
 		&snapshot.Action, &snapshot.BeforeYAML, &snapshot.AfterYAML,
 		&snapshot.Status, &snapshot.OperatorID, &snapshot.ApprovalStatus,
-		&snapshot.ApproverID, &snapshot.ApprovalComment, &snapshot.ApprovalTokenHash,
+		&snapshot.ApproverID, &snapshot.ApprovalComment, &snapshot.NotificationLocale,
+		&snapshot.ApprovalTokenHash,
 	)
 	return snapshot, err
 }
@@ -239,9 +282,9 @@ func (app *App) approveDeployment(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusConflict, "deployment approval is already processed")
 		return
 	}
-	app.notifyDeployment("deploy_approved", targetProject.Name, snapshot.Version, "running", currentUser(r).Name, request.Comment, snapshot.ID, targetProject.ID, "")
+	app.notifyDeployment("deploy_approved", targetProject.Name, snapshot.Version, "running", currentUser(r).Name, request.Comment, snapshot.NotificationLocale, snapshot.ID, targetProject.ID, "")
 	if err := app.executeDeployment(r.Context(), targetProject, snapshot); err != nil {
-		app.notifyDeployment("deploy_failed", targetProject.Name, snapshot.Version, "failed", currentUser(r).Name, request.Comment, snapshot.ID, targetProject.ID, "")
+		app.notifyDeployment("deploy_failed", targetProject.Name, snapshot.Version, "failed", currentUser(r).Name, request.Comment, snapshot.NotificationLocale, snapshot.ID, targetProject.ID, "")
 		httpx.Error(w, http.StatusBadGateway, "node deploy failed")
 		return
 	}
@@ -300,7 +343,7 @@ func (app *App) rejectDeployment(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusConflict, "deployment approval is already processed")
 		return
 	}
-	app.notifyDeployment("deploy_rejected", targetProject.Name, snapshot.Version, "rejected", currentUser(r).Name, request.Comment, snapshot.ID, targetProject.ID, "")
+	app.notifyDeployment("deploy_rejected", targetProject.Name, snapshot.Version, "rejected", currentUser(r).Name, request.Comment, snapshot.NotificationLocale, snapshot.ID, targetProject.ID, "")
 	httpx.WriteJSON(w, http.StatusOK, map[string]string{"status": "rejected"})
 }
 
@@ -333,9 +376,9 @@ func (app *App) approveDeploymentByToken(w http.ResponseWriter, r *http.Request)
 		writeApprovalHTML(w, http.StatusConflict, "无法处理", "该发布申请已处理。")
 		return
 	}
-	app.notifyDeployment("deploy_approved", targetProject.Name, snapshot.Version, "running", "钉钉审批", "一键同意", snapshot.ID, targetProject.ID, "")
+	app.notifyDeployment("deploy_approved", targetProject.Name, snapshot.Version, "running", notificationApproverLabel(snapshot.NotificationLocale), notificationActionLabel(snapshot.NotificationLocale, "approve"), snapshot.NotificationLocale, snapshot.ID, targetProject.ID, "")
 	if err := app.executeDeployment(r.Context(), targetProject, snapshot); err != nil {
-		app.notifyDeployment("deploy_failed", targetProject.Name, snapshot.Version, "failed", "钉钉审批", "一键同意", snapshot.ID, targetProject.ID, "")
+		app.notifyDeployment("deploy_failed", targetProject.Name, snapshot.Version, "failed", notificationApproverLabel(snapshot.NotificationLocale), notificationActionLabel(snapshot.NotificationLocale, "approve"), snapshot.NotificationLocale, snapshot.ID, targetProject.ID, "")
 		writeApprovalHTML(w, http.StatusBadGateway, "发布失败", "节点执行失败，请到发布历史查看详情。")
 		return
 	}
@@ -371,7 +414,7 @@ func (app *App) rejectDeploymentByToken(w http.ResponseWriter, r *http.Request) 
 		writeApprovalHTML(w, http.StatusConflict, "无法处理", "该发布申请已处理。")
 		return
 	}
-	app.notifyDeployment("deploy_rejected", targetProject.Name, snapshot.Version, "rejected", "钉钉审批", "一键拒绝", snapshot.ID, targetProject.ID, "")
+	app.notifyDeployment("deploy_rejected", targetProject.Name, snapshot.Version, "rejected", notificationApproverLabel(snapshot.NotificationLocale), notificationActionLabel(snapshot.NotificationLocale, "reject"), snapshot.NotificationLocale, snapshot.ID, targetProject.ID, "")
 	writeApprovalHTML(w, http.StatusOK, "发布已拒绝", "任务号："+snapshot.TaskID)
 }
 
@@ -474,12 +517,12 @@ func (app *App) retryDeployment(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	newSnapshot, err := app.createDeploymentSnapshot(r.Context(), targetProject, snapshot.AfterYAML, "deploy", "pending_approval", "pending", currentUser(r))
+	newSnapshot, err := app.createDeploymentSnapshot(r.Context(), targetProject, snapshot.AfterYAML, "deploy", "pending_approval", "pending", currentUser(r), requestLocale(r))
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	app.notifyDeployment("deploy_requested", targetProject.Name, newSnapshot.Version, newSnapshot.Status, currentUser(r).Name, "", newSnapshot.ID, targetProject.ID, newSnapshot.ApprovalToken)
+	app.notifyDeployment("deploy_requested", targetProject.Name, newSnapshot.Version, newSnapshot.Status, currentUser(r).Name, "", newSnapshot.NotificationLocale, newSnapshot.ID, targetProject.ID, newSnapshot.ApprovalToken)
 	httpx.WriteJSON(w, http.StatusAccepted, map[string]string{
 		"task_id": newSnapshot.TaskID,
 		"version": newSnapshot.Version,
@@ -509,7 +552,11 @@ func (app *App) deployCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var projectID int64
-	err := app.db.QueryRowContext(r.Context(), `SELECT project_id FROM deploy_snapshots WHERE task_id = ?`, callback.TaskID).Scan(&projectID)
+	var notificationLocale string
+	err := app.db.QueryRowContext(r.Context(), `
+		SELECT project_id, notification_locale FROM deploy_snapshots WHERE task_id = ?`,
+		callback.TaskID,
+	).Scan(&projectID, &notificationLocale)
 	if errors.Is(err, sql.ErrNoRows) {
 		httpx.Error(w, http.StatusNotFound, "task not found")
 		return
@@ -561,7 +608,7 @@ func (app *App) deployCallback(w http.ResponseWriter, r *http.Request) {
 	if status != "success" {
 		notificationEvent = "deploy_failed"
 	}
-	app.notifyDeployment(notificationEvent, callback.Project, callback.Version, status, "", "", 0, projectID, "")
+	app.notifyDeployment(notificationEvent, callback.Project, callback.Version, status, "", "", notificationLocale, 0, projectID, "")
 	httpx.WriteJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 }
 

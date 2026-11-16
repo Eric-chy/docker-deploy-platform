@@ -38,3 +38,28 @@ func TestMessageBodyExcludesActions(t *testing.T) {
 		t.Fatalf("markdown body should use blank lines: %s", message.MarkdownBody())
 	}
 }
+
+func TestMessageSupportsEnglishLocale(t *testing.T) {
+	message := Message{
+		Event:      "deploy_requested",
+		Project:    "my-app",
+		Version:    "v1",
+		Status:     "pending_approval",
+		Operator:   "admin",
+		Locale:     "en-US",
+		ApproveURL: "https://example.test/approve",
+		RejectURL:  "https://example.test/reject",
+	}
+
+	if message.Title() != "[Docker Deploy] Deployment approval requested: my-app" {
+		t.Fatalf("unexpected title: %s", message.Title())
+	}
+	if !strings.Contains(message.Body(), "Event: Deployment approval requested") ||
+		!strings.Contains(message.Body(), "Status: Pending approval") {
+		t.Fatalf("unexpected English body: %s", message.Body())
+	}
+	if !strings.Contains(message.MarkdownActions(), "[✅ Approve](https://example.test/approve)") ||
+		!strings.Contains(message.MarkdownActions(), "[❌ Reject](https://example.test/reject)") {
+		t.Fatalf("unexpected English actions: %s", message.MarkdownActions())
+	}
+}

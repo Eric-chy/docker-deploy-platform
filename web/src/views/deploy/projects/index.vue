@@ -377,29 +377,31 @@ onMounted(loadData);
       />
       <el-table-column :label="$tt('操作')" width="290" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" @click="openHistory(row)">{{
-            $tt("历史")
-          }}</el-button>
-          <el-button
-            v-if="canManageProject"
-            size="small"
-            @click="openEdit(row)"
-            >{{ $tt("编辑") }}</el-button
-          >
-          <el-button
-            v-if="canDeployProject"
-            size="small"
-            type="primary"
-            @click="openDeploy(row)"
-            >{{ $tt("发布") }}</el-button
-          >
-          <el-button
-            v-if="canManageProject"
-            size="small"
-            type="danger"
-            @click="handleDelete(row)"
-            >{{ $tt("删除") }}</el-button
-          >
+          <div class="table-actions">
+            <el-button size="small" @click="openHistory(row)">{{
+              $tt("历史")
+            }}</el-button>
+            <el-button
+              v-if="canManageProject"
+              size="small"
+              @click="openEdit(row)"
+              >{{ $tt("编辑") }}</el-button
+            >
+            <el-button
+              v-if="canDeployProject"
+              size="small"
+              type="primary"
+              @click="openDeploy(row)"
+              >{{ $tt("发布") }}</el-button
+            >
+            <el-button
+              v-if="canManageProject"
+              size="small"
+              type="danger"
+              @click="handleDelete(row)"
+              >{{ $tt("删除") }}</el-button
+            >
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -560,24 +562,26 @@ onMounted(loadData);
       </el-table-column>
       <el-table-column :label="$tt('操作')" width="190" fixed="right">
         <template #default="{ row }">
-          <el-button
-            v-if="canDeployProject"
-            size="small"
-            type="warning"
-            :loading="historyActionLoadingId === row.id"
-            :disabled="!canRollback(row)"
-            @click="handleHistoryRollback(row)"
-            >{{ $tt("回滚") }}</el-button
-          >
-          <el-button
-            v-if="canDeployProject"
-            size="small"
-            type="primary"
-            :loading="historyActionLoadingId === row.id"
-            :disabled="!canRetry(row)"
-            @click="handleHistoryRetry(row)"
-            >{{ $tt("重发") }}</el-button
-          >
+          <div class="table-actions">
+            <el-button
+              v-if="canDeployProject"
+              size="small"
+              type="warning"
+              :loading="historyActionLoadingId === row.id"
+              :disabled="!canRollback(row)"
+              @click="handleHistoryRollback(row)"
+              >{{ $tt("回滚") }}</el-button
+            >
+            <el-button
+              v-if="canDeployProject"
+              size="small"
+              type="primary"
+              :loading="historyActionLoadingId === row.id"
+              :disabled="!canRetry(row)"
+              @click="handleHistoryRetry(row)"
+              >{{ $tt("重发") }}</el-button
+            >
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -593,3 +597,17 @@ onMounted(loadData);
     </div>
   </el-dialog>
 </template>
+<style scoped>
+.table-actions {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.table-actions :deep(.el-button) {
+  flex-shrink: 0;
+  margin-left: 0;
+}
+</style>

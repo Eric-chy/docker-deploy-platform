@@ -280,43 +280,45 @@ onMounted(async () => {
       </el-table-column>
       <el-table-column :label="$tt('操作')" width="300" fixed="right">
         <template #default="{ row }">
-          <el-button
-            v-if="canApproveDeployment && canApprove(row)"
-            size="small"
-            type="success"
-            :loading="actionLoadingId === row.id"
-            @click="handleApproval(row, 'approve')"
-            >{{ $tt("同意") }}</el-button
-          >
-          <el-button
-            v-if="canApproveDeployment && canApprove(row)"
-            size="small"
-            type="danger"
-            :loading="actionLoadingId === row.id"
-            @click="handleApproval(row, 'reject')"
-            >{{ $tt("拒绝") }}</el-button
-          >
-          <el-button
-            v-if="canDeployProject"
-            size="small"
-            type="warning"
-            :loading="actionLoadingId === row.id"
-            :disabled="!canRollback(row)"
-            @click="handleRollback(row)"
-            >{{ $tt("回滚") }}</el-button
-          >
-          <el-button
-            v-if="canDeployProject"
-            size="small"
-            type="primary"
-            :loading="actionLoadingId === row.id"
-            :disabled="!canRetry(row)"
-            @click="handleRetry(row)"
-            >{{ $tt("重发") }}</el-button
-          >
-          <el-button size="small" @click="openDetail(row)">{{
-            $tt("详情")
-          }}</el-button>
+          <div class="table-actions">
+            <el-button
+              v-if="canApproveDeployment && canApprove(row)"
+              size="small"
+              type="success"
+              :loading="actionLoadingId === row.id"
+              @click="handleApproval(row, 'approve')"
+              >{{ $tt("同意") }}</el-button
+            >
+            <el-button
+              v-if="canApproveDeployment && canApprove(row)"
+              size="small"
+              type="danger"
+              :loading="actionLoadingId === row.id"
+              @click="handleApproval(row, 'reject')"
+              >{{ $tt("拒绝") }}</el-button
+            >
+            <el-button
+              v-if="canDeployProject"
+              size="small"
+              type="warning"
+              :loading="actionLoadingId === row.id"
+              :disabled="!canRollback(row)"
+              @click="handleRollback(row)"
+              >{{ $tt("回滚") }}</el-button
+            >
+            <el-button
+              v-if="canDeployProject"
+              size="small"
+              type="primary"
+              :loading="actionLoadingId === row.id"
+              :disabled="!canRetry(row)"
+              @click="handleRetry(row)"
+              >{{ $tt("重发") }}</el-button
+            >
+            <el-button size="small" @click="openDetail(row)">{{
+              $tt("详情")
+            }}</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -385,3 +387,17 @@ onMounted(async () => {
     </div>
   </el-dialog>
 </template>
+<style scoped>
+.table-actions {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.table-actions :deep(.el-button) {
+  flex-shrink: 0;
+  margin-left: 0;
+}
+</style>

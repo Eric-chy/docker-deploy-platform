@@ -40,8 +40,8 @@ func (DingTalkAdapter) Send(ctx context.Context, endpoint, secret string, messag
 				"text":           "### " + message.Title() + "\n\n" + message.MarkdownBody(),
 				"btnOrientation": "1",
 				"btns": []map[string]string{
-					{"title": "✅ 同意发布", "actionURL": message.ApproveURL},
-					{"title": "❌ 拒绝发布", "actionURL": message.RejectURL},
+					{"title": message.ApproveLabel(), "actionURL": message.ApproveURL},
+					{"title": message.RejectLabel(), "actionURL": message.RejectURL},
 				},
 			},
 		}

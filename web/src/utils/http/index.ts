@@ -12,7 +12,7 @@ import type {
 import { stringify } from "qs";
 import { getToken, formatToken, removeToken } from "@/utils/auth";
 import router from "@/router";
-import { useUserStoreHook } from "@/store/modules/user";
+import { i18n } from "@/plugins/i18n";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
@@ -61,6 +61,7 @@ class PureHttp {
   private httpInterceptorsRequest(): void {
     PureHttp.axiosInstance.interceptors.request.use(
       async (config: PureHttpRequestConfig): Promise<any> => {
+        config.headers["Accept-Language"] = i18n.global.locale.value;
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调
         if (typeof config.beforeRequestCallback === "function") {
           config.beforeRequestCallback(config);

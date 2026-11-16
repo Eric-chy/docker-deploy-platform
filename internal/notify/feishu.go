@@ -37,7 +37,7 @@ func (FeishuAdapter) Send(ctx context.Context, endpoint, secret string, message 
 					"type": "primary",
 					"text": map[string]string{
 						"tag":     "plain_text",
-						"content": "✅ 同意发布",
+						"content": message.ApproveLabel(),
 					},
 					"url": message.ApproveURL,
 				},
@@ -46,7 +46,7 @@ func (FeishuAdapter) Send(ctx context.Context, endpoint, secret string, message 
 					"type": "danger",
 					"text": map[string]string{
 						"tag":     "plain_text",
-						"content": "❌ 拒绝发布",
+						"content": message.RejectLabel(),
 					},
 					"url": message.RejectURL,
 				},
