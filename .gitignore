@@ -1,0 +1,12 @@
+.data/
+.tmp/
+web-old/
+web/dist/
+web/node_modules/
+bin/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+coverage.out
+.DS_Store
+*.log

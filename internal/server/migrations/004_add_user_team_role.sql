@@ -1,0 +1,2 @@
+ALTER TABLE user_teams
+ADD COLUMN role TEXT NOT NULL DEFAULT 'viewer';

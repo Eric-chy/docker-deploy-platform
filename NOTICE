@@ -1,0 +1,7 @@
+Docker Deployment Platform
+Copyright 2026 Eric
+
+This product includes software developed as part of Docker Deployment Platform.
+
+The web admin console is based on vue-pure-admin-thin, which is licensed under
+the MIT License. See web/LICENSE for the upstream license notice.

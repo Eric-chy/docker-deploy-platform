@@ -1,0 +1,59 @@
+CREATE TABLE teams (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  is_admin INTEGER NOT NULL DEFAULT 0,
+  token_version INTEGER NOT NULL DEFAULT 1,
+  disabled INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_teams (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  team_id INTEGER NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, team_id)
+);
+
+CREATE TABLE nodes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  address TEXT NOT NULL,
+  secret_encrypted TEXT NOT NULL,
+  agent_version TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'offline',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  team_id INTEGER NOT NULL REFERENCES teams(id),
+  node_id INTEGER NOT NULL REFERENCES nodes(id),
+  platform TEXT NOT NULL DEFAULT 'docker-compose',
+  current_yaml TEXT NOT NULL,
+  current_version TEXT NOT NULL,
+  image_repo TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE deploy_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id TEXT NOT NULL UNIQUE,
+  project_id INTEGER NOT NULL REFERENCES projects(id),
+  version TEXT NOT NULL,
+  action TEXT NOT NULL,
+  operator_id INTEGER NOT NULL REFERENCES users(id),
+  before_yaml TEXT NOT NULL,
+  after_yaml TEXT NOT NULL,
+  status TEXT NOT NULL,
+  output TEXT NOT NULL DEFAULT '',
+  keep INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (project_id, version)
+);

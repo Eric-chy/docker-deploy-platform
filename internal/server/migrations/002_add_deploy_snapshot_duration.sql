@@ -1,0 +1,2 @@
+ALTER TABLE deploy_snapshots
+ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0;
