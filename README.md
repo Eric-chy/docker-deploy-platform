@@ -54,6 +54,7 @@ Docker Deployment Platform 是一个面向内网环境的轻量级 Docker Compos
 - 调度节点服务执行发布。
 - 接收节点服务回调并更新发布状态。
 - 发送审批、成功、失败、拒绝等通知。
+![Uploading image.png…]()
 
 数据默认存储在 `.data/control.sqlite`。数据库结构通过 `internal/server/migrations` 中的 SQL 迁移自动创建和升级。
 
