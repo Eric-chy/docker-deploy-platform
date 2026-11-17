@@ -96,6 +96,9 @@ export default {
   "初始 Compose YAML": "初始 Compose YAML",
   "配置变更请使用“发布”，发布记录会保存回滚基线。":
     "配置变更请使用“发布”，发布记录会保存回滚基线。",
+  "当前 Compose YAML": "当前 Compose YAML",
+  "修改 YAML 只更新配置基线，不会部署节点；发布会生成发布记录。":
+    "修改 YAML 只更新配置基线，不会部署节点；发布会生成发布记录。",
   组名: "组名",
   新建项目组: "新建项目组",
   修改项目组: "修改项目组",
@@ -200,5 +203,15 @@ export default {
   请输入账号: "请输入账号",
   登录成功: "登录成功",
   登录失败: "登录失败",
-  账号或密码错误: "账号或密码错误"
+  账号或密码错误: "账号或密码错误",
+  "请先修复 YAML 配置错误": "请先修复 YAML 配置错误",
+  "请先完善项目信息并修复 YAML 配置错误":
+    "请先完善项目信息并修复 YAML 配置错误",
+  "Compose 文件必须是一个 YAML 对象": "Compose 文件必须是一个 YAML 对象",
+  "缺少 services 字段": "缺少 services 字段",
+  "services 必须是非空对象": "services 必须是非空对象",
+  "服务 {name} 必须是一个对象": "服务 {name} 必须是一个对象",
+  "服务 {name} 必须配置 image 或 build": "服务 {name} 必须配置 image 或 build",
+  "服务 {name} 的 ports 必须是数组": "服务 {name} 的 ports 必须是数组",
+  "第 {line} 行": "第 {line} 行"
 } as const;

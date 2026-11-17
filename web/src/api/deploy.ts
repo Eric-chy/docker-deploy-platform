@@ -68,6 +68,7 @@ export interface UpdateProjectPayload {
   name: string;
   team_id: number;
   node_id: number;
+  current_yaml: string;
 }
 
 export const listProjects = () =>

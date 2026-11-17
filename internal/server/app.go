@@ -146,10 +146,11 @@ type projectView struct {
 }
 
 type updateProjectRequest struct {
-	Name      string `json:"name"`
-	TeamID    int64  `json:"team_id"`
-	NodeID    int64  `json:"node_id"`
-	ImageRepo string `json:"image_repo"`
+	Name        string `json:"name"`
+	TeamID      int64  `json:"team_id"`
+	NodeID      int64  `json:"node_id"`
+	ImageRepo   string `json:"image_repo"`
+	CurrentYAML string `json:"current_yaml"`
 }
 
 func (app *App) projects(w http.ResponseWriter, r *http.Request) {
@@ -234,6 +235,10 @@ func (app *App) createProject(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "current_yaml is required")
 		return
 	}
+	if request.CurrentYAML == "" {
+		httpx.Error(w, http.StatusBadRequest, "current_yaml is required")
+		return
+	}
 	if !app.canAccessTeam(w, r, request.TeamID, "project:create") {
 		return
 	}
@@ -290,9 +295,11 @@ func (app *App) updateProject(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := app.db.ExecContext(r.Context(), `
 		UPDATE projects
-		SET name = ?, team_id = ?, node_id = ?, image_repo = ?, updated_at = CURRENT_TIMESTAMP
+		SET name = ?, team_id = ?, node_id = ?, image_repo = ?, current_yaml = ?,
+		    updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?`,
-		request.Name, request.TeamID, request.NodeID, request.ImageRepo, id,
+		request.Name, request.TeamID, request.NodeID, request.ImageRepo,
+		request.CurrentYAML, id,
 	); err != nil {
 		if isUniqueViolation(err) {
 			httpx.Error(w, http.StatusConflict, "project already exists")

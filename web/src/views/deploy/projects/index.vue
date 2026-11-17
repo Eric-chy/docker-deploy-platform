@@ -22,6 +22,8 @@ import {
 import { ElMessageBox } from "element-plus";
 import { computed, onMounted, reactive, ref } from "vue";
 import { hasPerms } from "@/utils/auth";
+import { validateComposeYaml } from "@/utils/compose-yaml";
+import YamlEditor from "@/components/YamlEditor/index.vue";
 
 defineOptions({ name: "DeployProjects" });
 
@@ -61,7 +63,8 @@ const editForm = reactive({
   id: 0,
   name: "",
   team_id: undefined as number | undefined,
-  node_id: undefined as number | undefined
+  node_id: undefined as number | undefined,
+  current_yaml: ""
 });
 
 const historyProject = ref<Project | null>(null);
@@ -70,7 +73,27 @@ const createDisabled = computed(
     !createForm.name ||
     createForm.team_id === undefined ||
     createForm.node_id === undefined ||
-    !createForm.current_yaml.trim()
+    !createForm.current_yaml.trim() ||
+    validateComposeYaml(createForm.current_yaml).some(
+      diagnostic => diagnostic.severity === "error"
+    )
+);
+const deployDisabled = computed(
+  () =>
+    !deployForm.yaml.trim() ||
+    validateComposeYaml(deployForm.yaml).some(
+      diagnostic => diagnostic.severity === "error"
+    )
+);
+const editDisabled = computed(
+  () =>
+    !editForm.name ||
+    editForm.team_id === undefined ||
+    editForm.node_id === undefined ||
+    !editForm.current_yaml.trim() ||
+    validateComposeYaml(editForm.current_yaml).some(
+      diagnostic => diagnostic.severity === "error"
+    )
 );
 const canManageProject = computed(() => hasPerms("project:create"));
 const canDeployProject = computed(() => hasPerms("deploy:publish"));
@@ -96,6 +119,10 @@ async function loadData() {
 }
 
 async function submitCreate() {
+  if (createDisabled.value) {
+    message(tt("请先完善项目信息并修复 YAML 配置错误"), { type: "error" });
+    return;
+  }
   try {
     await createProject({
       name: createForm.name,
@@ -127,7 +154,8 @@ async function openEdit(row: Project) {
       id: row.id,
       name: detail.name,
       team_id: detail.team_id,
-      node_id: detail.node_id
+      node_id: detail.node_id,
+      current_yaml: detail.current_yaml
     });
     editVisible.value = true;
   } catch (error) {
@@ -136,12 +164,17 @@ async function openEdit(row: Project) {
 }
 
 async function submitEdit() {
+  if (editDisabled.value) {
+    message(tt("请先完善项目信息并修复 YAML 配置错误"), { type: "error" });
+    return;
+  }
   editLoading.value = true;
   try {
     await updateProject(editForm.id, {
       name: editForm.name,
       team_id: editForm.team_id!,
-      node_id: editForm.node_id!
+      node_id: editForm.node_id!,
+      current_yaml: editForm.current_yaml
     });
     message(tt("项目修改成功"), { type: "success" });
     editVisible.value = false;
@@ -197,6 +230,10 @@ async function openDeploy(row: Project) {
 }
 
 async function submitDeploy() {
+  if (deployDisabled.value) {
+    message(tt("请先修复 YAML 配置错误"), { type: "error" });
+    return;
+  }
   deployLoading.value = true;
   try {
     const result = await deploy(deployForm.projectId, deployForm.yaml);
@@ -446,11 +483,7 @@ onMounted(loadData);
         </el-col>
       </el-row>
       <el-form-item :label="$tt('初始 Compose YAML')" required>
-        <el-input
-          v-model="createForm.current_yaml"
-          :rows="12"
-          type="textarea"
-        />
+        <YamlEditor v-model="createForm.current_yaml" height="360px" />
       </el-form-item>
       <el-button
         native-type="submit"
@@ -464,7 +497,9 @@ onMounted(loadData);
   <el-dialog v-model="editVisible" :title="$tt('修改项目')" width="760px">
     <el-form label-position="top" @submit.prevent="submitEdit">
       <el-alert
-        :title="$tt('配置变更请使用“发布”，发布记录会保存回滚基线。')"
+        :title="
+          $tt('修改 YAML 只更新配置基线，不会部署节点；发布会生成发布记录。')
+        "
         type="info"
         :closable="false"
         class="mb-4"
@@ -500,15 +535,14 @@ onMounted(loadData);
           </el-form-item>
         </el-col>
       </el-row>
+      <el-form-item :label="$tt('当前 Compose YAML')" required>
+        <YamlEditor v-model="editForm.current_yaml" height="360px" />
+      </el-form-item>
       <el-button
         native-type="submit"
         type="primary"
         :loading="editLoading"
-        :disabled="
-          !editForm.name ||
-          editForm.team_id === undefined ||
-          editForm.node_id === undefined
-        "
+        :disabled="editDisabled"
         >{{ $tt("保存") }}</el-button
       >
     </el-form>
@@ -525,13 +559,13 @@ onMounted(loadData);
       :closable="false"
       class="mb-4"
     />
-    <el-input v-model="deployForm.yaml" :rows="16" type="textarea" />
+    <YamlEditor v-model="deployForm.yaml" height="420px" />
     <template #footer>
       <el-button @click="deployVisible = false">{{ $tt("取消") }}</el-button>
       <el-button
         type="primary"
         :loading="deployLoading"
-        :disabled="!deployForm.yaml.trim()"
+        :disabled="deployDisabled"
         @click="submitDeploy"
         >{{ $tt("提交发布") }}</el-button
       >

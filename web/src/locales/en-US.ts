@@ -101,6 +101,9 @@ export default {
   "初始 Compose YAML": "Initial Compose YAML",
   "配置变更请使用“发布”，发布记录会保存回滚基线。":
     "Use Deploy for configuration changes. Deploy records keep the rollback baseline.",
+  "当前 Compose YAML": "Current Compose YAML",
+  "修改 YAML 只更新配置基线，不会部署节点；发布会生成发布记录。":
+    "Editing YAML only updates the baseline and does not deploy; publishing creates a deployment record.",
   组名: "Group Name",
   新建项目组: "New Project Group",
   修改项目组: "Edit Project Group",
@@ -207,5 +210,17 @@ export default {
   请输入账号: "Please enter your account",
   登录成功: "Signed in successfully.",
   登录失败: "Sign-in failed.",
-  账号或密码错误: "Invalid account or password."
+  账号或密码错误: "Invalid account or password.",
+  "请先修复 YAML 配置错误": "Fix the YAML configuration errors first.",
+  "请先完善项目信息并修复 YAML 配置错误":
+    "Complete the project information and fix the YAML errors first.",
+  "Compose 文件必须是一个 YAML 对象": "The Compose file must be a YAML object.",
+  "缺少 services 字段": "The services field is required.",
+  "services 必须是非空对象": "services must be a non-empty object.",
+  "服务 {name} 必须是一个对象": "Service {name} must be an object.",
+  "服务 {name} 必须配置 image 或 build":
+    "Service {name} must configure image or build.",
+  "服务 {name} 的 ports 必须是数组":
+    "ports of service {name} must be an array.",
+  "第 {line} 行": "Line {line}"
 } as const;
